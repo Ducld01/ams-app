@@ -26,10 +26,7 @@ export async function POST(request: Request) {
         VALUES (?, ?, ?)
       `);
     stmt.run(data.name, data.url, new Date().toISOString());
-    return NextResponse.json(
-      { message: "ref saved successfully" },
-      { status: 200 }
-    );
+    return NextResponse.redirect("/ref");
   } catch (error) {
     console.error("Error saving ref:", error);
     return NextResponse.json(
@@ -39,11 +36,31 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const refs = db.prepare("SELECT * FROM refs").all();
+    const url = new URL(request.url);
+    const params = new URLSearchParams(url.searchParams);
 
-    console.log(refs);
+    let query = "SELECT * FROM refs";
+    const conditions: string[] = [];
+    const values: (string | number)[] = [];
+
+    params.forEach((value, key) => {
+      if (key === "name") {
+        conditions.push(`${key} LIKE ?`);
+        values.push(`%${value}%`); // Add wildcards for partial matching
+      } else {
+        conditions.push(`${key} = ?`);
+        values.push(value);
+      }
+    });
+
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+
+    const stmt = db.prepare((query += " ORDER BY created_at DESC"));
+    const refs = stmt.all(...values);
 
     return NextResponse.json({ data: refs }, { status: 200 });
   } catch (error) {

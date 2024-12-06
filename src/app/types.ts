@@ -1,4 +1,5 @@
 export interface RedirectProfile {
+  id: string;
   active: boolean;
   probability: number;
   offerId: string;
@@ -27,7 +28,7 @@ export interface Project {
   status: string;
   created_at: string;
   redirectProfiles: RedirectProfile[];
-  campaign: Campaign[];
+  campaigns: Campaign[];
 }
 
 export interface Campaign {
